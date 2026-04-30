@@ -20,7 +20,8 @@
 				<set_value name="$DAMVT" exact="md.$DAMenuVarTable"/>
 				<set_value name="$DAGVT" exact="global.$DAVarTable"/>
 				<!-- Debug Var -->
-				<set_value name="$DAMVT.$DAMenuDebugEnable" exact="true"/>
+				<!-- mlog v1.13.1-mlog001 IM-6: was true (caused chance=100 spam from every menu interaction). Defaulting to false for production. -->
+				<set_value name="$DAMVT.$DAMenuDebugEnable" exact="false"/>
 				<!-- Dynamic War -->
 				<set_value name="$DAMVT.$DWMilStrengthHistory" exact="table[]"/>
 				<set_value name="$DAMVT.$InfoMilDisplayOption" exact="1"/>
@@ -104,7 +105,8 @@
 							<set_value name="$MissingVarCount" exact="1" operation="add"/>
 						</do_if>
 						<do_if value="(not $DAMVT.$DAMenuDebugEnable?) or (not ((typeof $DAMVT.$DAMenuDebugEnable == datatype.integer) and (($DAMVT.$DAMenuDebugEnable == 1) or ($DAMVT.$DAMenuDebugEnable == 0))))">
-							<set_value name="$DAMVT.$DAMenuDebugEnable" exact="true"/>
+							<!-- mlog v1.13.1-mlog001 IM-6: was true; defaulting to false for production (matches Init line 23). -->
+							<set_value name="$DAMVT.$DAMenuDebugEnable" exact="false"/>
 							<set_value name="$MissingVarCount" exact="1" operation="add"/>
 						</do_if>
 						<do_if value="(not $DAMVT.$DWMilStrengthHistory?) or ($DAMVT.$DWMilStrengthHistory == null)">

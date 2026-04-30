@@ -1,3 +1,13 @@
+# DeadAir Scripts — mlog4 fork (X4 9.x compatibility)
+
+> **This is a community-maintained compatibility fork** of DeadAir Scripts, continuing the mod after the original author retired (2025-09-23) under the GPL-3.0 licence he provided. The original gameplay logic is preserved unchanged; this fork only fixes compatibility issues with X4 Foundations 9.x. **Tested on X4 9.0 beta 7.**
+>
+> See [CHANGELOG.md](CHANGELOG.md) for what is different from the upstream release. The original DeadAirRT README is kept verbatim below.
+>
+> Companion mod (recommended): [DeadAir Eco — mlog4 fork](https://github.com/mlog4/deadair_eco). Scripts has hard cross-references to wares defined in Eco.
+>
+> ---
+
 # Deadair Scripts
 ## 20250923 I have decided to completely retire from X4 Modding. I have added licenses to Eco, Scripts, and DeadTater if any persons are interested in using, modifying, or continuing my works. Thank you for all the support and interest in my work over these years.
 ## Dynamic Universe

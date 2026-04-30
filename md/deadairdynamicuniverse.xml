@@ -1830,9 +1830,15 @@
 						<do_elseif value="(@$DADynamicWarOldRelation le -0.1) and (@$DADynamicWarNewRelation gt -0.1)">
 							<do_if value="$DWT.{$DADynamicWarFactionOne}.{$DADynamicWarFactionTwo}?">
 								<set_value name="$DWT.{$DADynamicWarFactionOne}.{$DADynamicWarFactionTwo}.{6}" exact="true"/>
+								<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_war">
+									<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [WAR/INFO] EndNow set: A=' + $DADynamicWarFactionOne + ', B=' + $DADynamicWarFactionTwo + ' (forward)'" chance="100" filter="general"/>
+								</do_if>
 							</do_if>
 							<do_if value="$DWT.{$DADynamicWarFactionTwo}.{$DADynamicWarFactionOne}?">
-								<set_value name="$DWT.{$DADynamicWarFactionOne}.{$DADynamicWarFactionTwo}.{6}" exact="true"/>
+								<set_value name="$DWT.{$DADynamicWarFactionTwo}.{$DADynamicWarFactionOne}.{6}" exact="true"/>
+								<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_war">
+									<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [WAR/INFO] EndNow set: A=' + $DADynamicWarFactionTwo + ', B=' + $DADynamicWarFactionOne + ' (mirror)'" chance="100" filter="general"/>
+								</do_if>
 							</do_if>
 						</do_elseif>
 						<!-- Relation is set, now for notification -->
@@ -4539,7 +4545,14 @@
 							<do_if value="(not $DAJobsEXPLocFactionToCheck.isactive) or (not $DADVT.$DAJobsEXPEnable) or (($DAJobsEXPLocFactionToCheck == faction.boron) and (not $DADVT.$DAJobsSSTRemoveExclusivity))">
 								<get_suitable_job result="$DAJobsEXPLocJobs" tags="$DAJobsEXPTags" faction="$DAJobsEXPLocFactionToCheck" includeinactive="true" multiple="true"/>
 								<do_if value="$DADVT.$DAJobsEXPFactions.indexof.{$DAJobsEXPLocFactionToCheck}">
-									<remove_from_list name="$DADVT.$DAJobsEXPFactions" exact="DAJobsEXPLocFactionToCheck" multiple="true"/>
+									<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_jobsexp">
+										<set_value name="$mlog_size_before" exact="$DADVT.$DAJobsEXPFactions.count"/>
+									</do_if>
+									<remove_from_list name="$DADVT.$DAJobsEXPFactions" exact="$DAJobsEXPLocFactionToCheck" multiple="true"/>
+									<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_jobsexp">
+										<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [JOBSEXP/INFO] removing faction ' + $DAJobsEXPLocFactionToCheck + ' from EXP list, list size before/after: ' + $mlog_size_before + '/' + $DADVT.$DAJobsEXPFactions.count" chance="100" filter="general"/>
+										<remove_value name="$mlog_size_before"/>
+									</do_if>
 								</do_if>
 								<do_if value="$DAJobsEXPLocJobs.count" min="1">
 									<do_for_each name="$DAJobsEXPLocJob" in="$DAJobsEXPLocJobs">
@@ -11639,7 +11652,15 @@
 												<set_value name="$DADVT.$DABPTracking.{$LocWare}.{2}" exact="$DADVT.$DABPClassRequirements.{$LocMacro.class}"/>
 											</do_if>
 											<do_if value="$DADVT.$DABPTracking.{$LocWare}.{1} ge $DADVT.$DABPTracking.{$LocWare}.{2}">
+												<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_bp">
+													<set_value name="$mlog_bp_exists_before" exact="player.blueprints.{$LocWare}.any.exists"/>
+													<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [BP/DIAG] LibraryBPCheckTable about to add_blueprints, ware=' + $LocWare.id + ', macro=' + $LocMacro.id + ', exists_before=' + $mlog_bp_exists_before" chance="100" filter="general"/>
+												</do_if>
 												<add_blueprints macros="$LocMacro"/>
+												<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_bp">
+													<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [BP/DIAG] LibraryBPCheckTable after add_blueprints, ware=' + $LocWare.id + ', macro=' + $LocMacro.id + ', exists_after=' + player.blueprints.{$LocWare}.any.exists + ' (if same as before, silent no-op confirmed)'" chance="100" filter="general"/>
+													<remove_value name="$mlog_bp_exists_before"/>
+												</do_if>
 												<do_if value="$DADVT.$DABPDebugEnable">
 													<debug_text text="'MOD: DABP -- LibraryBPCheckTable -- Awarded blueprint -- Ware: %s -- Macro: %s -- Progress: %s -- Goal: %s'.[$LocWare.id,$LocMacro.id,$DADVT.$DABPTracking.{$LocWare}.{1},$DADVT.$DABPTracking.{$LocWare}.{2}]" context="false" filter="scripts"/>
 												</do_if>
@@ -11743,6 +11764,7 @@
 						<set_value name="$Price" exact="$Trade.unitprice * $Trade.transferredamount"/>
 						<do_if value="$Buyer.isoperational and $Buyer.trueowner == faction.player and $Buyer.isclass.ship and $Buyer.defaultorder?">
 							<do_if value="((['TradeRoutine','TradeRoutine_Basic','TradeRoutine_Advanced','Middleman','MiningRoutine','MiningRoutine_Advanced','MiningRoutine_Expert','MiningRoutine_Basic'].indexof.{@$Buyer.defaultorder.id}) or ((@$Buyer.defaultorder.id == 'Assist') and (['TradeRoutine','TradeRoutine_Basic','TradeRoutine_Advanced','Middleman','MiningRoutine','MiningRoutine_Advanced','MiningRoutine_Expert','MiningRoutine_Basic'].indexof.{@$Buyer.commander.defaultorder.id})))">
+								<!-- mlog v1.13.1-mlog001 IM-4 documentation: $DATPTraderTable layout is [.{1}=cumulativeProfit, .{2}=firstSeenTimestamp]. .{2} is set ONCE on first insert (the do_elseif branch); subsequent updates only touch .{1}. Reader at deadairdynamicuniversemenus.xml:7725 computes player.age - .{2} = age of tracking entry. This is by-design firstSeen semantic, not lastUpdated. Same pattern in 3 sibling writer locations below. -->
 								<do_if value="$DAGVT.$DATPTraderTable.{$Buyer}?">
 									<set_value name="$DAGVT.$DATPTraderTable.{$Buyer}.{1}" exact="$Price" operation="subtract"/>
 								</do_if>
@@ -12534,7 +12556,8 @@
 					<actions>
 						<set_value name="$MissingVarCount" exact="0"/>
 						<do_if value="(not $DAGVT.$DAInfestationEnable?) or (not ((typeof $DAGVT.$DAInfestationEnable == datatype.integer) and (($DAGVT.$DAInfestationEnable == 1) or ($DAGVT.$DAInfestationEnable == 0))))">
-							<set_value name="$DAGVT.$DAInfestationEnable" exact="true"/>
+							<!-- mlog v1.13.1-mlog001 CR-2: was true; defaulting to false. Init line 37 also defaults false. Subsystem unfinished by author (4 cues with empty actions per concept C-010). User may re-enable via menu. -->
+							<set_value name="$DAGVT.$DAInfestationEnable" exact="false"/>
 							<set_value name="$MissingVarCount" exact="1" operation="add"/>
 						</do_if>
 						<do_if value="(not $DAGVT.$DAInfestationTable?) or ($DAGVT.$DAInfestationTable == null)">

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  mlog DeadAir Scripts test build — initialization, build version, debug toggles.
+
+  Loaded alongside main DeadAir Scripts MD. Does NOT modify upstream state.
+  All vars in our own md.mlog_da_scripts namespace.
+
+  Log prefix convention used by all mlog-added log lines:
+    'MLOG_DA v' + $build_version + ' [' + $subsystem + '/' + $level + '] ' + $msg
+
+  Subsystems used: EVOLUTION, BP, WAR, JOBSEXP, TP, INF, INIT, GENERAL
+  Levels:          DIAG (diagnostic — verifies hypothesis), INFO, WARN, ERROR
+
+  Filter logs via:
+    grep "MLOG_DA" script.log
+    grep "MLOG_DA.*\[EVOLUTION/" script.log
+    grep "MLOG_DA.*/WARN\]"      script.log
+-->
+<mdscript name="mlog_da_scripts"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <cues>
+
+    <!--
+      Init cue — runs once on game start or load.
+      Sets up build identity + per-subsystem debug toggles.
+      Master switch: $debug_master = false → all mlog log lines silent.
+    -->
+    <cue name="MlogDaInit" version="1">
+      <conditions>
+        <check_any>
+          <event_cue_signalled cue="md.Setup.GameStart"/>
+          <event_game_loaded/>
+        </check_any>
+      </conditions>
+      <actions>
+        <!-- Build identity — bump on every code change per build_workflow convention -->
+        <set_value name="$build_version"      exact="'1.13.1-mlog003'"/>
+        <set_value name="$build_date"         exact="'2026-04-29'"/>
+        <set_value name="$build_baseline"     exact="'DeadAirRT v1.13 (2025-02-22)'"/>
+
+        <!-- Master kill switch — set to false to silence ALL mlog log output globally -->
+        <set_value name="$debug_master"       exact="true"/>
+
+        <!-- Per-subsystem debug toggles. true = output enabled (when master is on too) -->
+        <!-- Default profile for build 001: CR-1, CR-3, INF on (we want diagnostic data);
+             IM-2, IM-3, IM-4 on briefly to verify fix worked, can flip off later.            -->
+        <set_value name="$debug_evolution"    exact="true"/>   <!-- CR-1 ware existence diagnostic -->
+        <set_value name="$debug_bp"           exact="true"/>   <!-- CR-3 add_blueprints silent-failure check -->
+        <set_value name="$debug_war"          exact="true"/>   <!-- IM-2 EndNow flag fix verification -->
+        <set_value name="$debug_jobsexp"      exact="true"/>   <!-- IM-3 missing $ fix verification -->
+        <set_value name="$debug_tp"           exact="true"/>   <!-- IM-4 .{2} semantic confirmation -->
+        <set_value name="$debug_inf"          exact="true"/>   <!-- CR-2 Infestation disable notice -->
+        <set_value name="$debug_init"         exact="true"/>   <!-- this Init cue itself -->
+
+        <!-- Banner — confirms our test build loaded -->
+        <do_if value="$debug_master and $debug_init">
+          <set_value name="$banner" exact="'MLOG_DA v' + $build_version + ' [INIT/INFO] LOADED — baseline ' + $build_baseline + ', date ' + $build_date"/>
+          <show_notification text="$banner"/>
+          <debug_text text="$banner" chance="100" filter="general"/>
+        </do_if>
+
+        <!-- CR-2 Infestation status report. DAVarTable may or may not be initialized when our cue runs (depends on event firing order vs DA's Init). Use plain `?` existence chain — `@` and `?` are mutually exclusive in MD expressions. -->
+        <do_if value="$debug_master and $debug_inf">
+          <do_if value="global.$DAVarTable? and global.$DAVarTable.$DAInfestationEnable?">
+            <do_if value="not global.$DAVarTable.$DAInfestationEnable">
+              <set_value name="$inf_msg" exact="'MLOG_DA v' + $build_version + ' [INF/WARN] Infestation disabled in mlog test build — original was unfinished (re-enable via DA menu if you want to test)'"/>
+              <show_notification text="$inf_msg"/>
+              <debug_text text="$inf_msg" chance="100" filter="general"/>
+            </do_if>
+            <do_else>
+              <debug_text text="'MLOG_DA v' + $build_version + ' [INF/INFO] Infestation enabled (player override or DA Init not yet run)'" chance="100" filter="general"/>
+            </do_else>
+          </do_if>
+          <do_else>
+            <debug_text text="'MLOG_DA v' + $build_version + ' [INF/DIAG] DAVarTable not ready at MlogDaInit time; user can grep [INF] later for status'" chance="100" filter="general"/>
+          </do_else>
+        </do_if>
+
+        <!-- CR-1 Evolution EQ-mod ware existence probe — one-shot at game-load. Tests all 60 ware ids referenced by LibraryEvolutionSetEQMods. If any are 'false', add_equipment_mods silently no-ops for that level/category and Xenon don't actually evolve. Pattern: build ware-name string into a variable first, then ware.{$var}? lookup (vanilla-proven pattern; string concat directly inside braces is untested). -->
+        <do_if value="$debug_master and $debug_evolution">
+          <do_for_each name="$lvl" in="[1,2,3,4,5,6,7,8,9,10]">
+            <set_value name="$wname_engine"  exact="'mod_engine_xenon_'         + $lvl + '_da'"/>
+            <set_value name="$wname_ship"    exact="'mod_ship_xenon_'           + $lvl + '_da'"/>
+            <set_value name="$wname_shield"  exact="'mod_shield_xenon_'         + $lvl + '_da'"/>
+            <set_value name="$wname_weapon"  exact="'mod_weapon_xenon_'         + $lvl + '_da'"/>
+            <set_value name="$wname_missile" exact="'mod_weapon_xenon_missile_' + $lvl + '_da'"/>
+            <set_value name="$wname_eco"     exact="'mod_ship_xenon_eco_'       + $lvl + '_da'"/>
+            <set_value name="$L_engine"  exact="ware.{$wname_engine}?"/>
+            <set_value name="$L_ship"    exact="ware.{$wname_ship}?"/>
+            <set_value name="$L_shield"  exact="ware.{$wname_shield}?"/>
+            <set_value name="$L_weapon"  exact="ware.{$wname_weapon}?"/>
+            <set_value name="$L_missile" exact="ware.{$wname_missile}?"/>
+            <set_value name="$L_eco"     exact="ware.{$wname_eco}?"/>
+            <debug_text text="'MLOG_DA v' + $build_version + ' [EVOLUTION/DIAG] L' + $lvl + ': engine=' + $L_engine + ' ship=' + $L_ship + ' shield=' + $L_shield + ' weapon=' + $L_weapon + ' missile=' + $L_missile + ' eco=' + $L_eco" chance="100" filter="general"/>
+          </do_for_each>
+          <remove_value name="$wname_engine"/>
+          <remove_value name="$wname_ship"/>
+          <remove_value name="$wname_shield"/>
+          <remove_value name="$wname_weapon"/>
+          <remove_value name="$wname_missile"/>
+          <remove_value name="$wname_eco"/>
+          <remove_value name="$L_engine"/>
+          <remove_value name="$L_ship"/>
+          <remove_value name="$L_shield"/>
+          <remove_value name="$L_weapon"/>
+          <remove_value name="$L_missile"/>
+          <remove_value name="$L_eco"/>
+          <remove_value name="$lvl"/>
+        </do_if>
+      </actions>
+    </cue>
+
+  </cues>
+</mdscript>

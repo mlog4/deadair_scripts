@@ -73,8 +73,8 @@
 				<set_value name="$DADVT.$DADynamicNewsTable" exact="table[]"/>
 				<set_value name="md.$DADNTable" exact="table[]"/>
 				<set_value name="$DADNT" exact="md.$DADNTable"/>
-				<find_sector groupname="$DADNT.$DADynamicNewsAllSectors" multiple="true"/>
-				<find_station groupname="$DADNT.$DADynamicNewsStations" multiple="true">
+				<find_sector groupname="$DADNT.$DADynamicNewsAllSectors" space="player.galaxy" multiple="true"/>
+				<find_station groupname="$DADNT.$DADynamicNewsStations" space="player.galaxy" multiple="true">
 					<match_any>
 						<match shipyard="true"/>
 						<match wharf="true"/>
@@ -2090,8 +2090,8 @@
 						<event_cue_signalled/>
 					</conditions>
 					<actions>
-						<find_sector groupname="$DADNT.$DADynamicNewsAllSectors" multiple="true"/>
-						<find_station groupname="$DADNT.$DADynamicNewsStations" multiple="true">
+						<find_sector groupname="$DADNT.$DADynamicNewsAllSectors" space="player.galaxy" multiple="true"/>
+						<find_station groupname="$DADNT.$DADynamicNewsStations" space="player.galaxy" multiple="true">
 							<match_any>
 								<match shipyard="true"/>
 								<match wharf="true"/>
@@ -2781,12 +2781,12 @@
 							<set_value name="$MissingVarCount" exact="1" operation="add"/>
 						</do_if>
 						<do_if value="not $DADNT.$DADynamicNewsAllSectors? or ($DADNT.$DADynamicNewsAllSectors == null)">
-							<find_sector groupname="$DADNT.$DADynamicNewsAllSectors" multiple="true"/>
+							<find_sector groupname="$DADNT.$DADynamicNewsAllSectors" space="player.galaxy" multiple="true"/>
 							<remove_value name="$DADynamicNewsAllSectors"/>
 							<set_value name="$MissingVarCount" exact="1" operation="add"/>
 						</do_if>
 						<do_if value="not $DADNT.$DADynamicNewsStations? or ($DADNT.$DADynamicNewsStations == null)">
-							<find_station groupname="$DADNT.$DADynamicNewsStations" multiple="true">
+							<find_station groupname="$DADNT.$DADynamicNewsStations" space="player.galaxy" multiple="true">
 								<match_any>
 									<match shipyard="true"/>
 									<match wharf="true"/>
@@ -3282,7 +3282,8 @@
 							<append_to_list name="$NewModules" exact="event.param.{2}"/>
 						</do_else>
 						<do_if value="@$EvolutionUpgradeStation">
-							<do_if value="$NewModules? and ($NewModules.count or ($NewModules != null))">
+							<!-- mlog004 (X4 9.0 beta 8 compat): skip staged-construction stations; vanilla rejects append. -->
+							<do_if value="$NewModules? and ($NewModules.count or ($NewModules != null)) and not @$EvolutionUpgradeStation.hasstagedconstruction">
 								<create_construction_sequence station="$EvolutionUpgradeStation" base="$EvolutionUpgradeStation.plannedconstruction.sequence" macros="$NewModules"/>
 							</do_if>
 							<do_else>
@@ -3526,14 +3527,14 @@
 									<do_if value="(not $DADVT.$DAEvolutionXenonShipGroup.indexof.{$DAEvolutionLocXShip}) and ($DADVT.$DAEvolutionXenonFleetJobNumbers.indexof.{$DAEvolutionLocXShip})">
 										<add_to_group groupname="$DADVT.$DAEvolutionXenonShipGroup" object="$DAEvolutionLocXShip"/>
 										<do_if value="$DADVT.$DAEvolutionDetailedDebug">
-											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Add to $DADVT.$DAEvolutionXenonShipGroup from $DADVT.$DAEvolutionXenonShipTempList -- Ship: %s (%s) -- Job: %s -- Location: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,$DAEvolutionLocXShip.sector.knownname]" context="false" filter="scripts"/>
+											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Add to $DADVT.$DAEvolutionXenonShipGroup from $DADVT.$DAEvolutionXenonShipTempList -- Ship: %s (%s) -- Job: %s -- Location: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,@$DAEvolutionLocXShip.sector.knownname]" context="false" filter="scripts"/>
 										</do_if>
 										<remove_from_list name="$DADVT.$DAEvolutionXenonShipTempList" exact="$DAEvolutionLocXShip" multiple="false"/>
 										<remove_from_group group="$DADVT.$DAEvolutionXenonFleetJobNumbers" object="$DAEvolutionLocXShip"/>
 									</do_if>
 									<do_elseif value="($DADVT.$DAEvolutionXenonShipGroup.indexof.{$DAEvolutionLocXShip}) or ($DADVT.$DAEvolutionXenonFleetJobNumbers.indexof.{$DAEvolutionLocXShip})">
 										<do_if value="$DADVT.$DAEvolutionDetailedDebug">
-											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Removing operational ship from temp list -- Ship: %s (%s) -- Job: %s -- Location: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,$DAEvolutionLocXShip.sector.knownname]" context="false" filter="scripts"/>
+											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Removing operational ship from temp list -- Ship: %s (%s) -- Job: %s -- Location: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,@$DAEvolutionLocXShip.sector.knownname]" context="false" filter="scripts"/>
 										</do_if>
 										<remove_from_list name="$DADVT.$DAEvolutionXenonShipTempList" exact="$DAEvolutionLocXShip" multiple="false"/>
 									</do_elseif>
@@ -3548,14 +3549,14 @@
 								<do_for_each name="$DAEvolutionLocXShip" in="$DADVT.$DAEvolutionXenonFleetJobNumbers" reverse="true">
 									<do_if value="$DADVT.$DAEvolutionXenonShipGroup.indexof.{$DAEvolutionLocXShip}">
 										<do_if value="$DADVT.$DAEvolutionDetailedDebug">
-											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Remove $DADVT.$DAEvolutionXenonShipGroup from $DADVT.$DAEvolutionXenonFleetJobNumbers -- Ship: %s (%s) -- Job: %s -- Location: %s -- Subordinates: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,$DAEvolutionLocXShip.sector.knownname,$DAEvolutionLocXShip.subordinates.count]" context="false" filter="scripts"/>
+											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Remove $DADVT.$DAEvolutionXenonShipGroup from $DADVT.$DAEvolutionXenonFleetJobNumbers -- Ship: %s (%s) -- Job: %s -- Location: %s -- Subordinates: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,@$DAEvolutionLocXShip.sector.knownname,$DAEvolutionLocXShip.subordinates.count]" context="false" filter="scripts"/>
 										</do_if>
 										<remove_from_group group="$DADVT.$DAEvolutionXenonFleetJobNumbers" object="$DAEvolutionLocXShip"/>
 									</do_if>
 									<do_elseif value="not $DADVT.$DAEvolutionXenonShipGroup.indexof.{$DAEvolutionLocXShip}">
 										<add_to_group groupname="$DADVT.$DAEvolutionXenonShipGroup" object="$DAEvolutionLocXShip"/>
 										<do_if value="$DADVT.$DAEvolutionDetailedDebug">
-											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Add to $DADVT.$DAEvolutionXenonShipGroup -- Ship: %s (%s) -- Job: %s -- Location: %s -- Subordinates: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,$DAEvolutionLocXShip.sector.knownname,$DAEvolutionLocXShip.subordinates.count]" context="false" filter="scripts"/>
+											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Add to $DADVT.$DAEvolutionXenonShipGroup -- Ship: %s (%s) -- Job: %s -- Location: %s -- Subordinates: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,@$DAEvolutionLocXShip.sector.knownname,$DAEvolutionLocXShip.subordinates.count]" context="false" filter="scripts"/>
 										</do_if>
 										<remove_from_group group="$DADVT.$DAEvolutionXenonFleetJobNumbers" object="$DAEvolutionLocXShip"/>
 									</do_elseif>
@@ -3570,13 +3571,13 @@
 								<do_for_each name="$DAEvolutionLocXShip" in="$DADVT.$DAEvolutionXenonShipGroup">
 									<do_if value="$DADVT.$DAEvolutionXenonShipTempList.indexof.{$DAEvolutionLocXShip}">
 										<do_if value="$DADVT.$DAEvolutionDetailedDebug">
-											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Remove $DADVT.$DAEvolutionXenonShipGroup from $DADVT.$DAEvolutionXenonShipTempList -- Ship: %s (%s) -- Job: %s -- Location: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,$DAEvolutionLocXShip.sector.knownname]" context="false" filter="scripts"/>
+											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Remove $DADVT.$DAEvolutionXenonShipGroup from $DADVT.$DAEvolutionXenonShipTempList -- Ship: %s (%s) -- Job: %s -- Location: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,@$DAEvolutionLocXShip.sector.knownname]" context="false" filter="scripts"/>
 										</do_if>
 										<remove_from_list name="$DADVT.$DAEvolutionXenonShipTempList" exact="$DAEvolutionLocXShip" multiple="false"/>
 									</do_if>
 									<do_if value="$DADVT.$DAEvolutionXenonFleetJobNumbers.indexof.{$DAEvolutionLocXShip}">
 										<do_if value="$DADVT.$DAEvolutionDetailedDebug">
-											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Remove $DADVT.$DAEvolutionXenonShipGroup from $DADVT.$DAEvolutionXenonFleetJobNumbers -- Ship: %s (%s) -- Job: %s -- Location: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,$DAEvolutionLocXShip.sector.knownname]" context="false" filter="scripts"/>
+											<debug_text text="'MOD: DAEvolution -- LibraryEvolutionCheckOperationalShips: Remove $DADVT.$DAEvolutionXenonShipGroup from $DADVT.$DAEvolutionXenonFleetJobNumbers -- Ship: %s (%s) -- Job: %s -- Location: %s'.[$DAEvolutionLocXShip.macro,$DAEvolutionLocXShip.idcode,$DAEvolutionLocXShip.job,@$DAEvolutionLocXShip.sector.knownname]" context="false" filter="scripts"/>
 										</do_if>
 										<remove_from_group group="$DADVT.$DAEvolutionXenonFleetJobNumbers" object="$DAEvolutionLocXShip"/>
 									</do_if>
@@ -5063,8 +5064,8 @@
 						<check_value value="$DADVT.$DAJobsSSTEnable"/>
 						<check_value value="$DAJSST.$PrerequisitesComplete"/>
 						<check_value value="$DAJSST.$ReadyToOrderShips"/>
-						<check_value value="$DADVT.$DAJobsSSTJobSizeQuotas.keys.list.count" min="1"/>
-						<check_value value="$DAJSST.$JobsActivated.keys.list.count" min="1"/>
+						<check_value value="$DADVT.$DAJobsSSTJobSizeQuotas.keys.count" min="1"/>
+						<check_value value="$DAJSST.$JobsActivated.keys.count" min="1"/>
 					</conditions>
 					<actions>
 						<!-- Reworked 20240520
@@ -5521,7 +5522,7 @@
 							</do_elseif>
 						</do_for_each>
 						<do_if value="$DADVT.$DAJobsSSTXtremelyDetailedDebug or $LocDebug">
-							<debug_text text="'MOD: DAJobsSST -- Initial Faction Check Complete -- SST Factions: %s -- Claimspace Factions: %s'.[$DADVT.$DAJobsSSTJobSizeQuotas.keys.list.count,$LocClaimspaceList.count]" context="false" filter="scripts"/>
+							<debug_text text="'MOD: DAJobsSST -- Initial Faction Check Complete -- SST Factions: %s -- Claimspace Factions: %s'.[$DADVT.$DAJobsSSTJobSizeQuotas.keys.count,$LocClaimspaceList.count]" context="false" filter="scripts"/>
 							<debug_text text="$LocDebugString" context="false" filter="scripts"/>
 						</do_if>
 						<!-- Inlcude default override library for easy diff changes -->
@@ -9146,7 +9147,7 @@
 					<conditions>
 						<check_value value="$DADVT.$DAGodEnable"/>
 						<check_value value="$DADVT.$DAGodStationUpgradeEnable"/>
-						<check_value value="$DADVT.$DAGodFactionModuleQuotas? and $DADVT.$DAGodFactionModuleQuotas.keys.list.count"/>
+						<check_value value="$DADVT.$DAGodFactionModuleQuotas? and $DADVT.$DAGodFactionModuleQuotas.keys.count"/>
 					</conditions>
 					<actions>
 						<set_value name="$DAGLocExcluded" exact="[faction.player,faction.xenon,faction.khaak]"/>
@@ -9281,11 +9282,11 @@
 							<remove_from_list name="$DAGodWareKeysList" list="$DAGodWareKeysRemovalList" multiple="true"/>
 						</do_if>
 						<!-- Signal cue that orders modules in order -->
-						<do_if value="$DADVT.$DAGodModuleOrderTable.{$DAGodFaction}.keys.list.count" min="1">
+						<do_if value="$DADVT.$DAGodModuleOrderTable.{$DAGodFaction}.keys.count" min="1">
 							<signal_cue_instantly cue="EventGodModuleQueue" param="[$DAGodFaction,$DAGodWareKeysList]"/>
 						</do_if>
 						<do_else>
-							<debug_text text="'MOD: DAGod -- EventGodSignalledActive -- ERROR:UNHANDLED -- Invalid $DADVT.$DAGodModuleOrderTable.{%s}.keys.list.count: %s'.[$DAGodFaction,$DADVT.$DAGodModuleOrderTable.{$DAGodFaction}.keys.list.count]" context="true" filter="error"/>
+							<debug_text text="'MOD: DAGod -- EventGodSignalledActive -- ERROR:UNHANDLED -- Invalid $DADVT.$DAGodModuleOrderTable.{%s}.keys.count: %s'.[$DAGodFaction,$DADVT.$DAGodModuleOrderTable.{$DAGodFaction}.keys.count]" context="true" filter="error"/>
 						</do_else>
 						<do_if value="$DADVT.$DAGodDetailedDebug">
 							<debug_text text="'MOD: DAGod -- EventGodSignalledActive -- Finished signalling EventGodModuleQueue for %s -- Ware typed ordered: %s'.[$DAGodFaction.id,$DAGodWareTypesOrdered]" context="false" filter="scripts"/>
@@ -10440,6 +10441,13 @@
 									<debug_text text="$LocDebugString" context="false" filter="scripts"/>
 									<remove_value name="$LocDebugString"/>
 								</do_if>
+								<!-- mlog004 (X4 9.0 beta 8 compat): vanilla introduced staged-construction "fixed sequence" mechanic.
+								     create_construction_sequence rejects appending to a plan with future stages.
+								     Skip these stations entirely; vanilla's own ExpandPrefabs cue (factionlogic.xml v18) handles them. -->
+								<do_if value="@$LocStation.hasstagedconstruction">
+									<debug_text text="'MOD: DAGod -- EventGodExpandStation -- skipping staged-construction station %s(%s); vanilla 9.x ExpandPrefabs handles it'.[@$LocStation.knownname,@$LocStation.idcode]" context="false" filter="scripts"/>
+								</do_if>
+								<do_else>
 								<!-- Find possible connection module macros for construction plan -->
 								<get_module_definition macro="$LocConnectionModules" faction="$LocStation.owner" tags="[tag.connection, tag.module]" set="$LocStation.modulesets.{1}" multiple="true"/>
 								<do_if value="$LocConnectionModules.count" min="1">
@@ -10464,6 +10472,7 @@
 								<do_else>
 									<debug_text text="'MOD: DAGod -- EventGodExpandStation -- ERROR:UNHANDLED -- $LocStation: %s(%s) -- $LocQuota: %s -- $LocModule: %s -- $LocFaction: %s -- $LocWare: %s'.[@$LocStation.knownname,@$LocStation.idcode,@$LocQuota,@$LocModule,@$LocFaction,@$LocWare]" context="true" filter="error"/>
 									<cancel_cue cue="EventGodExpandStation"/>
+								</do_else>
 								</do_else>
 							</do_if>
 							<do_elseif value="@$LocFaction and @$LocWare and @$LocQuota">
@@ -10827,7 +10836,8 @@
 										<debug_text text="'MOD: DAGod -- EventGodCheckKeyStation -- EQDock without all modules -- Faction: %s -- Station: %s(%s) -- Sector: %s -- $SelectedStorageModule: %s -- $SelectedPierModule: %s'.[$LocOwner.id,$LocStation.knownname,$LocStation.idcode,$LocStation.sector.knownname,@$SelectedStorageModule,@$SelectedPierModule]" context="false" filter="scripts"/>
 									</do_elseif>
 								</do_elseif>
-								<do_if value="$LocSuccess and $LocNewModules? and $LocNewModules.count">
+								<!-- mlog004 (X4 9.0 beta 8 compat): skip staged-construction stations; vanilla rejects append. -->
+								<do_if value="$LocSuccess and $LocNewModules? and $LocNewModules.count and not @$LocStation.hasstagedconstruction">
 									<!-- Find possible connection module macros for construction plan -->
 									<get_module_definition macro="$LocConnectionModules" faction="$LocOwner" tags="[tag.connection, tag.module]" set="$LocStation.modulesets.{1}" multiple="true"/>
 									<do_if value="$LocConnectionModules.count" min="1">
@@ -10992,7 +11002,7 @@
 						<!-- Use $DADVT.$DAGodFactionModuleQuotas.{$DAGodLocFaction} -->
 						<!-- DONE: Rework to handle factions that aren't currently active...how -->
 						<!-- DONE: Fix teladi getting refined metals... egosoft has entries for teladi race factions in modules.xml for refinedmetals even though they don't use it. Diff'd -->
-						<do_if value="$DADVT.$DAGodFactionModuleQuotas.keys.list.count" min="1">
+						<do_if value="$DADVT.$DAGodFactionModuleQuotas.keys.count" min="1">
 							<set_value name="$DAGodLocFactionsList" exact="[]"/>
 							<append_list_elements name="$DAGodLocFactionsList" other="$DADVT.$DAGodFactionModuleQuotas.keys.list"/>
 							<sort_list list="$DAGodLocFactionsList" sortbyvalue="loop.element.id"/>
@@ -11003,7 +11013,7 @@
 								<do_if value="$DAGodLocWares.count" min="1">
 									<sort_list list="$DAGodLocWares" sortbyvalue="loop.element.id"/>
 									<do_for_each name="$DAGodLocWare" in="$DAGodLocWares">
-										<do_if value="$DADVT.$DAGodDefaultModuleQuotas.keys.list.indexof.{$DAGodLocWare} and (not $DADVT.$DAGodFactionModuleQuotas.{$DAGodLocFaction}.{$DAGodLocWare}?)">
+										<do_if value="$DADVT.$DAGodDefaultModuleQuotas.{$DAGodLocWare}? and (not $DADVT.$DAGodFactionModuleQuotas.{$DAGodLocFaction}.{$DAGodLocWare}?)">
 											<get_module_definition macro="$DAGodLocModuleMacro" tags="[tag.production, tag.module]" faction="$DAGodLocFaction" race="$DAGodLocFaction.primaryrace" ware="$DAGodLocWare"/>
 											<do_if value="$DAGodLocModuleMacro">
 												<set_value name="$DADVT.$DAGodFactionModuleQuotas.{$DAGodLocFaction}.{$DAGodLocWare}" exact="[$DAGodLocModuleMacro,$DADVT.$DAGodDefaultModuleQuotas.{$DAGodLocWare}]"/>
@@ -12263,7 +12273,7 @@
 												<!-- $DAGVT.$DAInfestationTable.$SectorTable.{$LocSector}.{$Key} = [$LocPos, $StationGroup, $PatrolGroup, $InfestationShipGroup, $TimeOfInfestation, $CurrentScaling, $PatrolLeader] -->
 												<!-- $DAGVT.$DAInfestationTable.$CurrentInfestationGoals.{$LocSecCheck}.{$Key} = [LiveGroupEnroute,RequestedAmount,GroupOfStationsWithThisGoal] -->
 												<do_if value="@event.param2 and (@event.param3.{1} == $LocSector) and @event.param3.{2}">
-													<do_if value="$DAGVT.$DAInfestationTable.$SectorTable.{$LocSector}.keys.list.indexof.{event.param3.{2}}">
+													<do_if value="$DAGVT.$DAInfestationTable.$SectorTable.{$LocSector}.{event.param3.{2}}?">
 														<!-- Valid sector, valid goal -->
 														<do_if value="not $DAGVT.$DAInfestationTable.$SectorTable.{$LocSector}.{event.param3.{2}}.{4}.indexof.{event.param2}">
 															<add_to_group groupname="$DAGVT.$DAInfestationTable.$SectorTable.{$LocSector}.{event.param3.{2}}" object="event.param2"/>
@@ -12469,7 +12479,7 @@
 									<set_value name="$HasAHive" exact="false"/>
 									<create_group groupname="$LocStationGroup"/>
 									<create_group groupname="$LocPatrolGroup"/>
-									<do_if value="$DAGVT.$DAInfestationTable.$SectorTable.{$LocSector}.keys.list.count" min="1">
+									<do_if value="$DAGVT.$DAInfestationTable.$SectorTable.{$LocSector}.keys.count" min="1">
 										<do_for_each name="$Key" in="$DAGVT.$DAInfestationTable.$SectorTable.{$LocSector}.keys.list">
 											<do_if value="$DAGVT.$DAInfestationTable.$SectorTable.{$LocSector}.{$Key}.{2}.count" min="1">
 												<set_value name="$HasAHive" exact="true"/>

@@ -34,8 +34,8 @@
       </conditions>
       <actions>
         <!-- Build identity — bump on every code change per build_workflow convention -->
-        <set_value name="$build_version"      exact="'1.13.1-mlog003'"/>
-        <set_value name="$build_date"         exact="'2026-04-29'"/>
+        <set_value name="$build_version"      exact="'1.13.1-mlog007'"/>
+        <set_value name="$build_date"         exact="'2026-04-30'"/>
         <set_value name="$build_baseline"     exact="'DeadAirRT v1.13 (2025-02-22)'"/>
 
         <!-- Master kill switch — set to false to silence ALL mlog log output globally -->

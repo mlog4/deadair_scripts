@@ -10,9 +10,9 @@ This is a community-maintained compatibility fork of **DeadAir Scripts** by Dead
 
 **Companion mod** (recommended): [DeadAir Eco — mlog4 fork](https://github.com/mlog4/deadair_eco). This mod has hard cross-references to wares defined in Eco; running Scripts without Eco produces ~124 lookup errors per session.
 
-### v1.13.1-beta1 — 2026-04-29
+### v1.13.1-beta1 — 2026-04-30
 
-**Tested on**: X4 Foundations **9.0 beta 7**.
+**Tested on**: X4 Foundations **9.0 beta 7** (initial). Updated for **9.0 beta 8** vanilla diffs (analysis only — beta 8 game-load test pending).
 **Save-game**: should be compatible with existing saves (all changes are XML patches, no save-state schema changes).
 **Upstream baseline**: DeadAir Scripts v1.13 (DeadAirRT, final release 2025-02-22).
 
@@ -21,6 +21,12 @@ This is a community-maintained compatibility fork of **DeadAir Scripts** by Dead
 - **Dynamic News "New Station Started" event restored.** With X4 9.x's new prefab-construction handling, vanilla wraps the original `Request_Factory` body in a new `<do_else>`. The DA patch hooking the news signal failed silently (or fired twice in the `BuildInSector` case). News now correctly fires once when an NPC starts building a new factory.
 - **Dynamic War — "Nemesis" / "Best Friends" event ending bug fixed.** When the `EndNow` flag was set on a relation between Faction A and Faction B, the mirror entry (B → A) was not flagged, so the war/peace event never properly ended from the second faction's perspective. Both directions now end together.
 - **`DAJobsEXPLocFactionToCheck` no-op fixed.** A missing `$` prefix on a variable name made the engine treat it as a string literal, so the job-location filter was always empty. Now correctly references the variable.
+- **DynamicNews `find_sector` load errors fixed (X4 9.0 beta 8).** Three calls to `<find_sector>` for the DynamicNews sector list lacked the now-required `space=` attribute, throwing hard load errors in 9.0 beta 8 (was silent no-op in 8.x). Added `space="player.galaxy"` to all three.
+- **Massive log-spam fix: 200 000+ "ConstructionPlan::Append cannot append to fixed sequence" errors per session eliminated.** X4 9.0 introduced "staged construction" — once a station's plan is marked staged, vanilla rejects appending modules to it (the new vanilla `ExpandPrefabs` cue in `factionlogic.xml` v18 is the proper mechanism). DA's three `<create_construction_sequence>` call sites — `EventGodExpandStation`, `EventGodCheckKeyStation`, and `EventEvolutionUpgradeShipyard` — now check `not $Station.hasstagedconstruction` before appending, and silently skip staged stations (vanilla handles them). Dramatic debug-log clean-up; no observable gameplay change beyond fewer errors.
+
+#### Disabled / deferred
+
+- **Blueprint scanning patch on `aiscripts/order.move.recon.xml` temporarily disabled.** Vanilla 9.x restructured the police-recon scan loop deeply; DA's XPath into `do_if[$police]/do_else/do_if[isclass.ship]/do_if[$haltedby]` no longer matches and the patch was failing to load. Until a proper rewrite is done, the `policeassetscannedship` signal does not fire, so DA's Blueprint Scanning feature does not advance from player-asset police scans. The independent feature gate `$DABPEnable` is unaffected; if it was off, you see no change. Other BP unlock paths in DA continue working.
 
 #### Behavioural defaults changed
 
@@ -60,9 +66,9 @@ GPL-3.0 inherited from upstream. The original `LICENSE` file is preserved unchan
 
 **Парный мод** (рекомендуется): [DeadAir Eco — mlog4 fork](https://github.com/mlog4/deadair_eco). Этот мод жёстко зависит от товаров определённых в Eco; запуск Scripts без Eco даёт ~124 lookup-ошибки за сессию.
 
-### v1.13.1-beta1 — 29.04.2026
+### v1.13.1-beta1 — 30.04.2026
 
-**Тестировалось на**: X4 Foundations **9.0 beta 7**.
+**Тестировалось на**: X4 Foundations **9.0 beta 7** (изначально). Обновлено под vanilla-диффы **9.0 beta 8** (только аудит — повторный game-load тест на beta 8 ожидается).
 **Сейв-игры**: должны быть совместимы (все изменения — XML-патчи, схема сохранения не трогается).
 **Upstream-базовая версия**: DeadAir Scripts v1.13 (DeadAirRT, финальный релиз 22.02.2025).
 
@@ -71,6 +77,12 @@ GPL-3.0 inherited from upstream. The original `LICENSE` file is preserved unchan
 - **Восстановлено событие Dynamic News «New Station Started».** В X4 9.x в куе `Request_Factory` появилась обёртка `<do_else>` для prefab-конструкции — это ломало патч, который прицеплял news-сигнал. Событие либо не срабатывало, либо дублировалось в случае `BuildInSector`. Теперь news корректно срабатывает один раз когда NPC начинает строить новую фабрику.
 - **Исправлен баг завершения событий Dynamic War («Nemesis», «Best Friends» и т.д.).** При установке флага `EndNow` на отношения A→B зеркальная запись B→A не флагалась, и со стороны второй фракции событие никогда правильно не заканчивалось. Теперь обе стороны заканчивают одновременно.
 - **`DAJobsEXPLocFactionToCheck` no-op исправлен.** Из-за отсутствия префикса `$` движок принимал имя переменной за строковый литерал — фильтр локаций для джобов всегда был пуст. Теперь переменная корректно резолвится.
+- **Исправлены load-ошибки `find_sector` для DynamicNews (X4 9.0 beta 8).** Три вызова `<find_sector>` для построения списка секторов DynamicNews не имели обязательного теперь атрибута `space=` — в 9.0 beta 8 это hard load error (в 8.x было silent no-op). Добавлен `space="player.galaxy"` во все три.
+- **Устранены 200 000+ ошибок «ConstructionPlan::Append cannot append to fixed sequence» за сессию.** X4 9.0 ввёл «staged construction» — как только план станции помечен staged, vanilla отклоняет append модулей (новый vanilla cue `ExpandPrefabs` в `factionlogic.xml` v18 — правильный механизм для таких станций). Три DA-евских вызова `<create_construction_sequence>` — `EventGodExpandStation`, `EventGodCheckKeyStation`, `EventEvolutionUpgradeShipyard` — теперь проверяют `not $Station.hasstagedconstruction` перед append-ом и тихо пропускают staged-станции (их обрабатывает vanilla). Резкая чистка debug-лога; геймплей-видимых изменений нет (кроме отсутствия ошибок).
+
+#### Отключено / отложено
+
+- **Патч Blueprint Scanning в `aiscripts/order.move.recon.xml` временно отключён.** Vanilla 9.x значительно перестроила loop полицейского сканирования; DA-евский XPath на `do_if[$police]/do_else/do_if[isclass.ship]/do_if[$haltedby]` больше не матчится — патч не загружался. До правильного rewrite сигнал `policeassetscannedship` не срабатывает, поэтому фича Blueprint Scanning от player-asset police-сканов не прогрессирует. Независимый feature-гейт `$DABPEnable` не затронут — если он был выключен, наблюдаемых изменений нет. Прочие пути unlock blueprint в DA продолжают работать.
 
 #### Изменены значения по умолчанию
 

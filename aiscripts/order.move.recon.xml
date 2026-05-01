@@ -1,8 +1,31 @@
 <?xml version='1.0' encoding='utf-8'?>
+<!--
+  TEMPORARILY DISABLED in v1.13.1-mlog004 (X4 9.0 beta 8 compatibility).
+
+  Original DA patch added a signal_objects 'policeassetscannedship' inside the
+  $haltedby check of the police-recon scan loop. Vanilla 9.x restructured
+  attention/actions deeply enough that the original XPath:
+
+    /aiscript/attention/actions/do_if[$localtarget]/do_if[isoperational and ...]/do_if[$police]/do_else/do_if[isclass.ship]/do_if[$haltedby]
+
+  no longer matches (the equivalent test now lives at a different nesting depth
+  inside the do_while scan loop ~ line 1597 of vanilla 9.0 beta 8). Fixing it
+  requires a full XPath rewalk of the new vanilla scan loop. Deferred to a
+  later mlog build.
+
+  Functional impact while disabled: DA's Blueprint Scanning feature
+  (EventBPPlayerAssetScannedShip cue in deadairdynamicuniverse.xml line ~11398)
+  receives no signals, so blueprint progress from player-asset police scans
+  does not advance. All other DA Scripts features unaffected. The feature gate
+  $DABPEnable is also independent: if disabled, no observable change at all.
+
+  Original patch body (preserved for future XPath rewrite reference):
+
+    <add sel="/aiscript/attention/actions/do_if[@value='@$localtarget']/do_if[@value='$localtarget.isoperational and ($trouble? or (not $break? and $time_scandone? and player.age ge $time_scandone))']/do_if[@value='$police']/do_else/do_if[@value='$localtarget.isclass.ship']/do_if[@value='@$localtarget.pilot.$haltedby == this.assignedcontrolled']" pos="before">
+      <do_if value="($localtarget.trueowner != faction.player) and (this.isplayerowned)">
+        <signal_objects object="player.entity" param="'policeassetscannedship'" param2="$localtarget" param3="this.ship"/>
+      </do_if>
+    </add>
+-->
 <diff>
-  <add sel="/aiscript/attention/actions/do_if[@value='@$localtarget']/do_if[@value='$localtarget.isoperational and ($trouble? or (not $break? and $time_scandone? and player.age ge $time_scandone))']/do_if[@value='$police']/do_else/do_if[@value='$localtarget.isclass.ship']/do_if[@value='@$localtarget.pilot.$haltedby == this.assignedcontrolled']" pos="before">
-    <do_if value="($localtarget.trueowner != faction.player) and (this.isplayerowned)">
-      <signal_objects object="player.entity" param="'policeassetscannedship'" param2="$localtarget" param3="this.ship"/>
-    </do_if>
-  </add>
 </diff>

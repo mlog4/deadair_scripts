@@ -2,6 +2,34 @@
 
 > **English version below. Русская версия ниже.**
 
+
+### v1.13.1-mlog007rel — 2026-07-04
+
+**Tested on**: X4 Foundations **9.0 release** (2026-06-10 onwards). 5+ hour multi-mod soak with mlog_galactic_heroes + deadair_eco (mlog006rel) + SirNukes Mod Support APIs. Full validation of all major DA modules:
+
+- DADynamicWar — fired (BigBoost between Terran + Teladi observed)
+- DADynamicNews — fired repeatedly (sector ownership + station expansion + relation shift reports)
+- DAEvolution — 10 evolved Xenon fleets active across 5 sectors, cap enforced
+- DAJobsEXP — all 9 expedition jobs active from t=306s
+- DAFill — station cargo top-ups running (BUC, SCA, ARG, TEL observed)
+- DA Wares — all Eco cross-references resolved (da_mil_schematics, da_adv_schematics, da_laborunion_contracts)
+- Xenon evolution ware exists check: **60/60** (L1-L10 × engine/ship/shield/weapon/missile/eco)
+
+**Zero MD errors from deadair_scripts namespace.** The only DA-mentioned errors in the log were the known `[GodStationEntry]` "unable to find suitable locations" warnings from DA God when the universe is already densely populated — cosmetic, not blocking.
+
+**Save-game**: compatible with existing 8.x saves loaded on 9.0.
+
+#### Changed
+- `content.xml` — bumped `<dependency version="700"/>` —→ `"900"` (X4 9.0 target).
+- `content.xml` — removed "updated for beta 8 vanilla diffs" statement (superseded by release validation).
+- No code changes since build_007 (2026-04-30). This is a metadata / publication release only.
+
+#### Publishing
+- Ready for Steam Workshop and Nexus Mods.
+- Companion mod: [deadair_eco (X4 9.x compat fork)](https://github.com/mlog4/deadair_eco). Install both.
+
+---
+
 ---
 
 ## English

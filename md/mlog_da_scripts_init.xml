@@ -34,8 +34,8 @@
       </conditions>
       <actions>
         <!-- Build identity — bump on every code change per build_workflow convention -->
-        <set_value name="$build_version"      exact="'1.13.1-mlog007'"/>
-        <set_value name="$build_date"         exact="'2026-04-30'"/>
+        <set_value name="$build_version"      exact="'1.13.1-mlog012bp'"/>
+        <set_value name="$build_date"         exact="'2026-07-04'"/>
         <set_value name="$build_baseline"     exact="'DeadAirRT v1.13 (2025-02-22)'"/>
 
         <!-- Master kill switch — set to false to silence ALL mlog log output globally -->
@@ -51,6 +51,7 @@
         <set_value name="$debug_tp"           exact="true"/>   <!-- IM-4 .{2} semantic confirmation -->
         <set_value name="$debug_inf"          exact="true"/>   <!-- CR-2 Infestation disable notice -->
         <set_value name="$debug_init"         exact="true"/>   <!-- this Init cue itself -->
+        <set_value name="$debug_god"          exact="true"/>   <!-- mlog008 God system full-path diagnostic (Phase 1 God fix) -->
 
         <!-- Banner — confirms our test build loaded -->
         <do_if value="$debug_master and $debug_init">

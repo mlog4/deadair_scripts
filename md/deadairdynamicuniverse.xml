@@ -3286,6 +3286,15 @@
 							<do_if value="$NewModules? and ($NewModules.count or ($NewModules != null)) and not @$EvolutionUpgradeStation.hasstagedconstruction">
 								<create_construction_sequence station="$EvolutionUpgradeStation" base="$EvolutionUpgradeStation.plannedconstruction.sequence" macros="$NewModules"/>
 							</do_if>
+							<do_elseif value="@$EvolutionUpgradeStation.hasstagedconstruction and @$EvolutionUpgradeStation.hasfutureconstructionstage and not @$EvolutionUpgradeStation.buildingprocessor.isbuilding">
+								<!-- mlog011 Option A: vanilla-style stage advance via add_build_to_expand_station -->
+								<add_build_to_expand_station buildobject="$EvolutionUpgradeStation" object="$EvolutionUpgradeStation.buildstorage" constructionplan="$EvolutionUpgradeStation.plannedconstruction.sequence.finalsequence">
+									<stage exact="$EvolutionUpgradeStation.plannedconstruction.sequence.stage.current + 1"/>
+								</add_build_to_expand_station>
+								<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_god">
+									<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [GOD/DIAG] EVOLUTION STAGE-ADVANCED station=' + $EvolutionUpgradeStation.knownname" chance="100" filter="general"/>
+								</do_if>
+							</do_elseif>
 							<do_else>
 								<cancel_cue cue="EventEvolutionUpgradeShipyard"/>
 							</do_else>
@@ -9150,6 +9159,9 @@
 						<check_value value="$DADVT.$DAGodFactionModuleQuotas? and $DADVT.$DAGodFactionModuleQuotas.keys.count"/>
 					</conditions>
 					<actions>
+						<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_god">
+							<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [GOD/DIAG] TimerGodFindKeyStations FIRED at t=' + (player.age/1s) + 's; DAGodEnable=' + $DADVT.$DAGodEnable" chance="100" filter="general"/>
+						</do_if>
 						<set_value name="$DAGLocExcluded" exact="[faction.player,faction.xenon,faction.khaak]"/>
 						<create_group groupname="$DAGCheckStations"/>
 						<do_for_each name="$DAGLocFaction" in="$DADVT.$DAGodFactionModuleQuotas.keys.list">
@@ -9173,7 +9185,10 @@
 							</do_if>
 						</do_for_each>
 						<do_if value="$DAGCheckStations.count" min="1">
-							<signal_cue_instantly cue="EventGodSpreadKeyStationChecks" param="$DAGCheckStations"/>
+							<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_god">
+							<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [GOD/DIAG] Signalling EventGodSpreadKeyStationChecks with count=' + $DAGCheckStations.count" chance="100" filter="general"/>
+						</do_if>
+						<signal_cue_instantly cue="EventGodSpreadKeyStationChecks" param="$DAGCheckStations"/>
 						</do_if>
 						<remove_value name="$DAGLocExcluded"/>
 						<remove_value name="$DAGCheckStations"/>
@@ -9201,6 +9216,9 @@
 						<event_cue_signalled/>
 					</conditions>
 					<actions>
+						<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_god">
+							<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [GOD/DIAG] EventGodSignalledActive fired; param=' + event.param" chance="100" filter="general"/>
+						</do_if>
 						<!-- Menu will signal this active
 							event.param = $Faction
 							$DADVT.$DAGodFactionModuleQuotas
@@ -9418,6 +9436,9 @@
 					</conditions>
 					<delay exact="event.param.{3}"/>
 					<actions>
+						<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_god">
+							<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [GOD/DIAG] EventGodDesignStation ATTEMPTING to design new station; param=' + event.param" chance="100" filter="general"/>
+						</do_if>
 						<!-- event.param = [$DAGodFaction,$DAGodWare,$DAGodDelay,null/quota] -->
 						<!-- 20240328 If a previous attempt fails or is destroyed, then signal this cue with the number of modules in event.param.{4} -->
 						<!-- 20240420 Removing build plot reduction has solved the station design error problem, increasing size to 25 modules -->
@@ -10444,9 +10465,21 @@
 								<!-- mlog004 (X4 9.0 beta 8 compat): vanilla introduced staged-construction "fixed sequence" mechanic.
 								     create_construction_sequence rejects appending to a plan with future stages.
 								     Skip these stations entirely; vanilla's own ExpandPrefabs cue (factionlogic.xml v18) handles them. -->
-								<do_if value="@$LocStation.hasstagedconstruction">
-									<debug_text text="'MOD: DAGod -- EventGodExpandStation -- skipping staged-construction station %s(%s); vanilla 9.x ExpandPrefabs handles it'.[@$LocStation.knownname,@$LocStation.idcode]" context="false" filter="scripts"/>
+								<do_if value="@$LocStation.hasstagedconstruction and @$LocStation.hasfutureconstructionstage and not @$LocStation.buildingprocessor.isbuilding">
+								<!-- mlog011 Option A: vanilla-style stage advance for staged idle stations with future stages -->
+								<add_build_to_expand_station buildobject="$LocStation" object="$LocStation.buildstorage" constructionplan="$LocStation.plannedconstruction.sequence.finalsequence">
+									<stage exact="$LocStation.plannedconstruction.sequence.stage.current + 1"/>
+								</add_build_to_expand_station>
+								<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_god">
+									<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [GOD/DIAG] STAGE-ADVANCED station=' + $LocStation.knownname + ' idcode=' + $LocStation.idcode + ' stage-> + ' + ($LocStation.plannedconstruction.sequence.stage.current + 1) + ' skipped_modules=' + $LocNewModules.count" chance="100" filter="general"/>
 								</do_if>
+							</do_if>
+							<do_elseif value="@$LocStation.hasstagedconstruction">
+									<debug_text text="'MOD: DAGod -- EventGodExpandStation -- skipping staged-construction station %s(%s); vanilla 9.x ExpandPrefabs handles it'.[@$LocStation.knownname,@$LocStation.idcode]" context="false" filter="scripts"/>
+									<do_if value="@md.mlog_da_scripts.MlogDaInit.$debug_master and @md.mlog_da_scripts.MlogDaInit.$debug_god">
+										<debug_text text="'MLOG_DA v' + @md.mlog_da_scripts.MlogDaInit.$build_version + ' [GOD/DIAG] SKIPPED-STAGED station=' + @$LocStation.knownname + ' idcode=' + @$LocStation.idcode + ' hasstagedconstruction=' + $LocStation.hasstagedconstruction + ' hasfutureconstructionstage=' + @$LocStation.hasfutureconstructionstage + ' buildingprocessor.isbuilding=' + @$LocStation.buildingprocessor.isbuilding + ' modules_wanted=' + $LocNewModules.count" chance="100" filter="general"/>
+									</do_if>
+								</do_elseif>
 								<do_else>
 								<!-- Find possible connection module macros for construction plan -->
 								<get_module_definition macro="$LocConnectionModules" faction="$LocStation.owner" tags="[tag.connection, tag.module]" set="$LocStation.modulesets.{1}" multiple="true"/>

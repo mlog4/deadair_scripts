@@ -3,6 +3,62 @@
 > **English version below. Русская версия ниже.**
 
 
+### v1.13.1-mlog012bp — 2026-07-04
+
+**Tested on**: X4 Foundations **9.0 release** (2026-06-10 onwards). 5h 45min multi-mod soak with mlog_galactic_heroes + deadair_eco (mlog006rel) + SirNukes Mod Support APIs. Full DA feature set active with zero errors in the mod's namespace.
+
+**Summary**: This build restores TWO major DA features that were previously either fully or partially disabled by mlog004 for X4 9.0 beta compatibility. God can now expand staged NPC stations by advancing their planned construction stages (mlog011 Option A), and Blueprint Scanning police-asset path is re-hooked into the modern vanilla scan loop (mlog012bp).
+
+#### Changed
+
+##### mlog011 — DA God Option A: vanilla-style stage advance for staged stations
+
+X4 9.0 release marks effectively all NPC stations with `hasstagedconstruction=true`. The mlog004 guard we added to eliminate 200 000+ "cannot append to fixed sequence" errors per session had the side effect of blocking `EventGodExpandStation` on all such stations — DA God became a full no-op for expansion of existing stations.
+
+Analysis of vanilla `md/factionlogic_economy.xml` revealed that vanilla itself handles staged expansion via `<add_build_to_expand_station>` with a `<stage>` param — the action advances the station's own planned construction plan by one stage rather than trying to append new modules. This is compatible with the 9.0 "fixed sequence" restriction.
+
+Rewritten the two main expand paths in `md/deadairdynamicuniverse.xml` (Xenon shipyard evolution site at line ~3286, and God main expand at line ~10447) to route staged stations with future stages and idle build processors through `add_build_to_expand_station`, while non-staged stations continue using the original `create_construction_sequence` path with DA's custom modules. Sites without future stages or currently building are correctly skipped.
+
+**Diff**: `md/deadairdynamicuniverse.xml` — 3 sites reworked with `<do_elseif>` branches; new `[GOD/DIAG] STAGE-ADVANCED` diagnostic log line added.
+
+**Impact**: DA God is now fully operational on 9.0. In a 5h 45min soak: 46 stage advances observed, 262 new station orders issued, 262 "Ordering Stations" events. Zero "cannot append to fixed sequence" errors, down from tens of thousands per session in the previous behaviour.
+
+##### mlog012bp — Blueprint scanning police-asset path re-enabled
+
+`aiscripts/order.move.recon.xml` XPath was rewritten against the vanilla 9.0 release structure. The equivalent scan-complete-clear point is now under a `<do_else>` at line ~1601 (was line ~1597 in beta 8, and used to be inside a `do_if[$police]/do_else` at line ~1310 in 8.x). New XPath uses `starts-with()` on the sibling `debug_text` prefix to disambiguate from the interrupt-triggered clear branch (line ~205, "called to attack. clearing target").
+
+**Impact**: 37 blueprints awarded across the 5h 45min soak (turrets, engines, shields, ships, station modules) from Argon, Teladi, and Paranid faction ships. Vanilla `policeassetscannedship` signal fires at the correct location; DA's `EventBPPlayerAssetScannedShip` cue receives it; `EventBPAddProgress` awards blueprints via `add_blueprints` action. Feature gate `$DABPEnable` in DA menu is respected.
+
+#### Deployed since mlog007rel
+
+- v1.13.1-mlog008dgod — Phase 1 diagnostic instrumentation on 4 God cues.
+- v1.13.1-mlog009rl — Attempted relaxed guard (rolled back — 26k errors).
+- v1.13.1-mlog010rvt — Reverted to strict mlog004 guard after failed relaxation attempt.
+- v1.13.1-mlog011opta — Option A stage-advance implementation.
+- v1.13.1-mlog012bp — BP scanning XPath rewrite. **This release.**
+
+#### Soak validation summary (2026-07-04, 5h 45min)
+
+| Feature | Events | Verdict |
+|---------|-------:|---------|
+| Dynamic War | 572 | working |
+| Dynamic News | 454 | working |
+| Xenon Evolution | 354 | working |
+| DA Fill | 19883 | working |
+| DA Jobs SST | 7437 | working |
+| DA God new orders | 262 | working |
+| DA God STAGE-ADVANCED | 46 | working (new) |
+| DA Blueprint awards | 37 | working (restored) |
+| `cannot append to fixed sequence` errors | 0 | fixed |
+| DAGod-namespace errors | 0 | clean |
+| `mlog_da_scripts` errors | 0 | clean |
+
+#### Publishing
+
+Ready for Steam Workshop and Nexus Mods.
+
+---
+
 ### v1.13.1-mlog007rel — 2026-07-04
 
 **Tested on**: X4 Foundations **9.0 release** (2026-06-10 onwards). 5+ hour multi-mod soak with mlog_galactic_heroes + deadair_eco (mlog006rel) + SirNukes Mod Support APIs. Full validation of all major DA modules:

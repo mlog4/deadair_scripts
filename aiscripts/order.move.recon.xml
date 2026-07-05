@@ -1,31 +1,49 @@
 <?xml version='1.0' encoding='utf-8'?>
 <!--
-  TEMPORARILY DISABLED in v1.13.1-mlog004 (X4 9.0 beta 8 compatibility).
+  RE-ENABLED in v1.13.1-mlog012bp (X4 9.0 release compatibility).
 
-  Original DA patch added a signal_objects 'policeassetscannedship' inside the
-  $haltedby check of the police-recon scan loop. Vanilla 9.x restructured
-  attention/actions deeply enough that the original XPath:
+  Vanilla 9.0 restructured order.move.recon.xml. The equivalent scan-clear
+  point is now near line 1601, under a <do_else> block that fires when the
+  police ship is clearing a scanned target (the scan revealed nothing
+  actionable and we are releasing the halted target).
 
-    /aiscript/attention/actions/do_if[$localtarget]/do_if[isoperational and ...]/do_if[$police]/do_else/do_if[isclass.ship]/do_if[$haltedby]
+  Structure at the target site:
 
-  no longer matches (the equivalent test now lives at a different nesting depth
-  inside the do_while scan loop ~ line 1597 of vanilla 9.0 beta 8). Fixing it
-  requires a full XPath rewalk of the new vanilla scan loop. Deferred to a
-  later mlog build.
-
-  Functional impact while disabled: DA's Blueprint Scanning feature
-  (EventBPPlayerAssetScannedShip cue in deadairdynamicuniverse.xml line ~11398)
-  receives no signals, so blueprint progress from player-asset police scans
-  does not advance. All other DA Scripts features unaffected. The feature gate
-  $DABPEnable is also independent: if disabled, no observable change at all.
-
-  Original patch body (preserved for future XPath rewrite reference):
-
-    <add sel="/aiscript/attention/actions/do_if[@value='@$localtarget']/do_if[@value='$localtarget.isoperational and ($trouble? or (not $break? and $time_scandone? and player.age ge $time_scandone))']/do_if[@value='$police']/do_else/do_if[@value='$localtarget.isclass.ship']/do_if[@value='@$localtarget.pilot.$haltedby == this.assignedcontrolled']" pos="before">
-      <do_if value="($localtarget.trueowner != faction.player) and (this.isplayerowned)">
-        <signal_objects object="player.entity" param="'policeassetscannedship'" param2="$localtarget" param3="this.ship"/>
+    <do_else>
+      <debug_text text="'clearing %s %s %s'..."/>
+      <do_if value="$localtarget.isclass.ship">                       (anchor)
+        <do_if value="@$localtarget.pilot.$haltedby == ...">
+          <set_value name="this.$police_cleared.{$localtarget}"       (we prepend our signal before this)
+                     exact="player.age"/>
+        </do_if>
+        ...
       </do_if>
-    </add>
+      ...
+    </do_else>
+
+  A second structurally similar site exists at line ~205 inside an
+  interrupt/attack handler ("called to attack. clearing target"). To
+  disambiguate we anchor on the sibling debug_text prefix in the parent
+  do_else:
+
+    - target site's debug_text starts with "'clearing "
+    - interrupt site's debug_text starts with "'called to attack. clearing "
+
+  starts-with() picks only the main scan-clear branch.
+
+  Feature gated by $DABPEnable in DA menu (disabled by default). If the
+  hook fires but $DABPEnable is off, DA's BP subsystem silently ignores.
+
+  Diagnostic: after enabling BP scanning in DA menu and completing a
+  police scan on a non-player ship, watch script.log for the signal:
+
+    grep "policeassetscannedship" script.log
+    grep "MOD: DABP" script.log
 -->
 <diff>
+  <add sel="//do_else[debug_text[starts-with(@text, &quot;'clearing &quot;)]]/do_if[@value='$localtarget.isclass.ship']/do_if[@value='@$localtarget.pilot.$haltedby == this.assignedcontrolled']" pos="prepend">
+    <do_if value="($localtarget.trueowner != faction.player) and (this.isplayerowned)">
+      <signal_objects object="player.entity" param="'policeassetscannedship'" param2="$localtarget" param3="this.ship"/>
+    </do_if>
+  </add>
 </diff>
